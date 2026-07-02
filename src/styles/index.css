@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+@import "tailwindcss";
+/* ============================================================
+   Tema claro — Cuestionario ISP
+   ============================================================ */
+:root {
+  /* Fondos */
+  --background: #f8fafc;          /* Fondo general (gris muy muy claro) */
+  --card: #ffffff;                /* Tarjetas y sidebar */
+  --input-background: #ffffff;    /* Inputs */
+
+  /* Texto */
+  --foreground: #1f2937;          /* Texto principal */
+  --muted-foreground: #6b7280;    /* Texto secundario */
+
+  /* Bordes y superficies neutras */
+  --border: #e5e7eb;              /* Bordes suaves */
+  --muted: #f3f4f6;               /* Fondo gris muy claro */
+  --secondary: #f3f4f6;           /* Botones/superficies secundarias */
+
+  /* Color de marca — azul ISP (ajusta el HEX al color exacto de tu marca si lo tienes) */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+
+  /* Colores ISP */
+  --isp-turquesa: #00B8B0;
+  --isp-azul: #203454;
+
+  --primary: var(--isp-turquesa);
+  --primary-foreground: #ffffff;
+}
+
+/* Base */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Encabezados sin tamaños por defecto agresivos */
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+h2 { font-size: 1rem; }
+h3 { font-size: 0.875rem; }
+
+/* Scrollbar suave en navegadores webkit */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 8px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

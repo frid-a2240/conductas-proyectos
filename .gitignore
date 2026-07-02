@@ -1,0 +1,12 @@
+node_modules/
+backend/venv312/
+backend/__pycache__/
+backend/.env
+.vscode/
+web.config
+runserver.py
+logs/
+*.pyc
+.DS_Stores
+node_modules/
+
