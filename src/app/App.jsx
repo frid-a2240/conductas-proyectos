@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LayoutGrid, HelpCircle, BarChart2, ChevronRight, LogOut, ShieldCheck, PanelLeftClose, PanelLeft, Search } from "lucide-react";
+import { LayoutGrid, HelpCircle, BarChart2, ChevronRight, LogOut, ShieldCheck, PanelLeftClose, PanelLeft, ClipboardCheck } from "lucide-react";
 import { MatrixView } from "../components/Matrixview.jsx";
 import { QuestionsView } from "../components/Questionsview.jsx";
 import { StatisticsView } from "../components/Statisticsview.jsx";
@@ -8,13 +8,13 @@ import { ChangePassword } from "../components/ChangePassword.jsx";
 import { api } from "../api.js";
 import { auth } from "../auth.js";
 import logocompleto from "../imports/logocompleto.jpg";
-import { DetalleEvaluaciones } from "../components/DetalleEvaluaciones.jsx";
+import { EstatusEvaluaciones } from "../components/EstatusEvaluaciones.jsx";
 
 const NAV_ITEMS = [
   { id: "matriz",       label: "Matriz",       icon: <LayoutGrid size={16} />, description: "Respuestas por usuario", roles: ["admin"] },
   { id: "preguntas",    label: "Preguntas",    icon: <HelpCircle size={16} />, description: "Gestionar y evaluar",    roles: ["admin", "supervisor"] },
   { id: "estadisticas", label: "Estadísticas", icon: <BarChart2  size={16} />, description: "Análisis de respuestas", roles: ["admin"] },
-  { id: "detalle",      label: "Detalle",      icon: <Search size={16} />,     description: "Detalle por evaluador",  roles: ["admin"], numeroEmpleado: "204726" },
+  { id: "estatus", label: "Estatus", icon: <ClipboardCheck size={16} />, description: "Quién ya completó", roles: ["admin"], numeroEmpleado: "202001" },
 ];
 
 export default function App() {
@@ -234,9 +234,9 @@ export default function App() {
           {safeModule === "estadisticas" && (
             <StatisticsView questions={questions} usuarios={usuarios} respuestas={respuestas} />
           )}
-          {safeModule === "detalle" && (
-            <DetalleEvaluaciones user={session} />
-          )}
+          {safeModule === "estatus" && (
+  <EstatusEvaluaciones />
+)}
         </div>
       </main>
     </div>

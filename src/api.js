@@ -1,5 +1,5 @@
 // Siempre relativo: en dev el proxy de Vite redirige; en prod FastAPI lo sirve.
-const BASE = "/cuestionario/api";
+const BASE = "/conductas-proyectos/api";
 
 // Endpoints donde un 401 NO significa "sesión expirada", sino "credenciales inválidas"
 const AUTH_ENDPOINTS = ["/auth/login", "/auth/change-password"];
@@ -32,10 +32,8 @@ async function req(path, options = {}) {
 }
 
 export const api = {
-  // ━━━ Detalle de evaluaciones (solo 204726) ━━━
-  listEvaluadores:    ()  => req("/admin/evaluadores"),
-  respuestasDetalle:  (evaluador, usuario_id) =>
-    req(`/admin/respuestas-detalle?evaluador=${encodeURIComponent(evaluador)}&usuario_id=${usuario_id}`),
+ // ━━━ Estatus (solo Cristina 202001) ━━━
+cristinaEstatus: () => req("/cristina/estatus"),
   // ━━━ Auth ━━━
   login: (numero_empleado, password) =>
     req("/auth/login", { method: "POST", body: JSON.stringify({ numero_empleado, password }) }),
@@ -62,9 +60,11 @@ export const api = {
   borrarUsuario:  (id)       => req(`/usuarios/${id}`, { method: "DELETE" }),
 
   // ━━━ Respuestas ━━━
-  respuestas:        ()       => req("/respuestas"),
-  guardarRespuesta:  (usuario_id, pregunta_id, respuesta) =>
-    req("/respuestas", { method: "POST", body: JSON.stringify({ usuario_id, pregunta_id, respuesta }) }),
+respuestas:        ()       => req("/respuestas"),
+guardarRespuesta:  (usuario_id, pregunta_id, respuesta) =>
+  req("/respuestas", { method: "POST", body: JSON.stringify({ usuario_id, pregunta_id, respuesta }) }),
+guardarRespuestasBatch: (respuestas) =>
+  req("/respuestas/batch", { method: "POST", body: JSON.stringify({ respuestas }) }),
 
   // ━━━ Excel ━━━
   exportarExcel: async () => {
@@ -76,7 +76,7 @@ export const api = {
     a.href = url;
     const disp = r.headers.get("Content-Disposition") || "";
     const match = disp.match(/filename="([^"]+)"/);
-    a.download = match ? match[1] : "cuestionario.xlsx";
+    a.download = match ? match[1] : "conductas.xlsx";
     document.body.appendChild(a);
     a.click();
     a.remove();

@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime
 from io import BytesIO
 
+from psycopg2.extras import execute_values
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -19,7 +20,7 @@ from security import (
     require_user, require_admin,
 )
 
-app = FastAPI(title="API Cuestionario ISP")
+app = FastAPI(title="API Conductas-proyectos ISP")
 
 # ─── CORS — orígenes explícitos para que las cookies funcionen en dev ───
 app.add_middleware(
@@ -34,8 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router con prefijo /cuestionario/api — todas las rutas viven aquí
-api = APIRouter(prefix="/cuestionario/api")
+# Router con prefijo /conductas-proyectos/api — todas las rutas viven aquí
+api = APIRouter(prefix="/conductas-proyectos/api")
 
 
 # ═══════════════════════ Modelos ═══════════════════════
@@ -56,6 +57,14 @@ class RespuestaIn(BaseModel):
     pregunta_id: int
     respuesta: Optional[int]   # 1-5 (Likert) o None para borrar
 
+class RespuestaBatchItem(BaseModel):
+    usuario_id: int
+    pregunta_id: int
+    respuesta: int   # 0-5 (no acepta None; batch es para envío completo)
+
+class RespuestasBatchIn(BaseModel):
+    respuestas: list[RespuestaBatchItem]
+
 class LoginRequest(BaseModel):
     numero_empleado: str
     password: str
@@ -64,13 +73,15 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
-# ═══════════════════════ Guard para súper-admin (solo 204726) ═══════════════════════
-SUPER_ADMIN_EMPLEADO = "204726"
 
-def require_super_admin(user: dict = Depends(require_user)):
-    if user["numero_empleado"] != SUPER_ADMIN_EMPLEADO:
+# ═══════════════════════ Guard exclusivo para Cristina (202001) ═══════════════════════
+CRISTINA_EMPLEADO = "202001"
+
+def require_cristina(user: dict = Depends(require_user)):
+    if user["numero_empleado"] != CRISTINA_EMPLEADO:
         raise HTTPException(status_code=403, detail="No autorizado")
     return user
+
 
 # ═══════════════════════ AUTH ═══════════════════════
 @api.post("/auth/login")
@@ -324,6 +335,53 @@ def upsert_respuesta(r: RespuestaIn, user: dict = Depends(require_user)):
         )
         return cur.fetchone()
 
+
+@api.post("/respuestas/batch")
+def upsert_respuestas_batch(data: RespuestasBatchIn, user: dict = Depends(require_user)):
+    """Guarda TODAS las respuestas del evaluador en UN solo round-trip.
+    Reemplaza N llamadas al POST /respuestas cuando se envía la evaluación."""
+    evaluador = user["numero_empleado"]
+
+    with get_cursor() as cur:
+        # Bloqueo si ya envió
+        cur.execute(
+            "SELECT evaluacion_completada FROM auth_users WHERE numero_empleado = %s",
+            (evaluador,),
+        )
+        row = cur.fetchone()
+        if row and row["evaluacion_completada"]:
+            raise HTTPException(
+                403,
+                "Tu evaluación ya fue enviada y no puede modificarse. Contacta a un administrador para reiniciarla."
+            )
+
+        # Validar rango de cada respuesta
+        for r in data.respuestas:
+            if not (0 <= r.respuesta <= 5):
+                raise HTTPException(
+                    400,
+                    f"Valor inválido {r.respuesta} para pregunta {r.pregunta_id}: debe estar entre 0 y 5"
+                )
+
+        # Upsert en bloque — una sola sentencia SQL
+        rows = [
+            (evaluador, r.usuario_id, r.pregunta_id, r.respuesta)
+            for r in data.respuestas
+        ]
+        execute_values(
+            cur,
+            """INSERT INTO respuestas
+                   (evaluador_numero_empleado, usuario_id, pregunta_id, respuesta)
+               VALUES %s
+               ON CONFLICT (evaluador_numero_empleado, usuario_id, pregunta_id)
+               DO UPDATE SET respuesta = EXCLUDED.respuesta,
+                             fecha_respuesta = CURRENT_TIMESTAMP""",
+            rows,
+        )
+
+    return {"ok": True, "guardadas": len(data.respuestas)}
+
+
 # ═══════════════════════ Estado de evaluación ═══════════════════════
 @api.get("/evaluacion/estado")
 def estado_evaluacion(user: dict = Depends(require_user)):
@@ -410,6 +468,27 @@ def reiniciar_evaluaciones(admin: dict = Depends(require_admin)):
         """)
     return {"ok": True, "message": "Evaluaciones reiniciadas. Todos los supervisores pueden evaluar de nuevo."}
 
+
+# ═══════════════════════ Estatus (solo Cristina — 202001) ═══════════════════════
+@api.get("/cristina/estatus")
+def cristina_estatus(admin: dict = Depends(require_cristina)):
+    """Lista de evaluadores con su estado: Completada o Pendiente.
+    Excluye a Sofía (204862) porque es admin de pruebas, no evalúa realmente."""
+    with get_cursor() as cur:
+        cur.execute("""
+            SELECT numero_empleado,
+                   nombre,
+                   rol,
+                   evaluacion_completada,
+                   evaluacion_completada_at
+            FROM auth_users
+            WHERE is_active = TRUE
+              AND numero_empleado <> '204862'
+            ORDER BY evaluacion_completada DESC, nombre
+        """)
+        return cur.fetchall()
+
+
 # ═══════════════════════ Exportar a Excel ═══════════════════════
 @api.get("/exportar/excel")
 def exportar_excel(admin: dict = Depends(require_admin)):
@@ -446,7 +525,7 @@ def exportar_excel(admin: dict = Depends(require_admin)):
          4: "Casi siempre presenta esta conducta",
          5: "Siempre presenta esta conducta",
     }
-    
+
     LIKERT_FILL = {
         1: "FEE2E2", 2: "FED7AA", 3: "FEF3C7", 4: "D1FAE5", 5: "A7F3D0",
     }
@@ -595,7 +674,7 @@ def exportar_excel(admin: dict = Depends(require_admin)):
     buffer.seek(0)
 
     fecha = datetime.now().strftime("%Y%m%d_%H%M")
-    filename = f"cuestionario_ISP_{fecha}.xlsx"
+    filename = f"conductas_ISP_{fecha}.xlsx"
 
     return StreamingResponse(
         buffer,
@@ -603,66 +682,7 @@ def exportar_excel(admin: dict = Depends(require_admin)):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
-# ═══════════════════════ Detalle de evaluaciones (solo 204726) ═══════════════════════
-@api.get("/admin/evaluadores")
-def list_evaluadores(admin: dict = Depends(require_super_admin)):
-    """Lista de quienes PUEDEN evaluar (auth_users activos)."""
-    with get_cursor() as cur:
-        cur.execute("""
-            SELECT numero_empleado, nombre, rol,
-                   evaluacion_completada, evaluacion_completada_at
-            FROM auth_users
-            WHERE is_active = TRUE
-            ORDER BY nombre
-        """)
-        return cur.fetchall()
 
-
-@api.get("/admin/respuestas-detalle")
-def respuestas_detalle(
-    evaluador: str,
-    usuario_id: int,
-    admin: dict = Depends(require_super_admin),
-):
-    """Devuelve las calificaciones INDIVIDUALES (sin promediar) que un evaluador
-    específico le puso a un evaluado específico, agrupadas por Valor y pregunta."""
-    with get_cursor() as cur:
-        # Datos de contexto
-        cur.execute("SELECT nombre FROM auth_users WHERE numero_empleado = %s", (evaluador,))
-        ev_row = cur.fetchone()
-        cur.execute("SELECT nombre FROM usuarios WHERE id = %s", (usuario_id,))
-        eval_row = cur.fetchone()
-
-        if not ev_row or not eval_row:
-            raise HTTPException(404, "Evaluador o evaluado no encontrado")
-
-        # Todas las preguntas activas + la respuesta (si existe) que dio el evaluador
-        cur.execute("""
-            SELECT p.id            AS pregunta_id,
-                   p.texto         AS pregunta_texto,
-                   p.orden         AS pregunta_orden,
-                   v.id            AS valor_id,
-                   v.nombre        AS valor_nombre,
-                   v.color         AS valor_color,
-                   v.orden         AS valor_orden,
-                   r.respuesta     AS respuesta,
-                   r.fecha_respuesta
-            FROM preguntas p
-            JOIN valores v ON v.id = p.valor_id
-            LEFT JOIN respuestas r
-                   ON r.pregunta_id = p.id
-                  AND r.usuario_id  = %s
-                  AND r.evaluador_numero_empleado = %s
-            WHERE p.activa = TRUE
-            ORDER BY v.orden, p.orden, p.id
-        """, (usuario_id, evaluador))
-        filas = cur.fetchall()
-
-    return {
-        "evaluador":       {"numero_empleado": evaluador, "nombre": ev_row["nombre"]},
-        "evaluado":        {"id": usuario_id, "nombre": eval_row["nombre"]},
-        "calificaciones":  filas,
-    }
 # ═══════════════════════ Registrar router ═══════════════════════
 # IMPORTANTE: include_router va DESPUÉS de definir todos los endpoints
 app.include_router(api)
@@ -672,13 +692,13 @@ app.include_router(api)
 DIST = Path(__file__).parent / "dist"
 
 if DIST.exists():
-    app.mount("/cuestionario/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+    app.mount("/conductas-proyectos/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
-    @app.get("/cuestionario")
+    @app.get("/conductas-proyectos")
     async def redirect_root():
-        return RedirectResponse("/cuestionario/")
+        return RedirectResponse("/conductas-proyectos/")
 
-    @app.get("/cuestionario/{full_path:path}")
+    @app.get("/conductas-proyectos/{full_path:path}")
     async def serve_spa(full_path: str):
         file_path = DIST / full_path
         if file_path.is_file():

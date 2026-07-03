@@ -4,19 +4,12 @@ from security import hash_password
 DEFAULT_PASSWORD = "isp2026"
 
 USERS = [
-    ("202326", "Israel Mojica",         "admin"),
-    ("204726", "Jesus Samaniego",       "admin"),
-    ("204232", "Beatriz Tapiz",         "supervisor"),
-    ("204495", "Carlos Cue",            "supervisor"),
-    ("202001", "Cristina Clemente",     "supervisor"),
-    ("202150", "Ernesto Gonzalez",      "supervisor"),
-    ("300127", "Francisco Guirado",     "supervisor"),
-    ("203076", "Gilberto Martinez",     "supervisor"),
-    ("204560", "Nadia Padilla",         "supervisor"),
-    ("204413", "Hugo Poot",             "supervisor"),
-    ("300131", "Su Lin Zamora",         "supervisor"),
-    ("201647", "Tomas Mendez",          "supervisor"),
-    ("300138", "Victoria Rodriguez",    "supervisor"),
+    # numero    nombre                 rol
+    ("203715", "Roger Aguilar",       "supervisor"),
+    ("204401", "Victor Rivera",       "supervisor"),
+    ("204827", "Estefania Mendoza",   "supervisor"),
+    ("202001", "Cristina Clemente",   "admin"),
+   
 ]
 
 def main():
@@ -35,6 +28,11 @@ def main():
                     SET nombre = EXCLUDED.nombre,
                         rol    = EXCLUDED.rol
             """, (numero, nombre_norm, pwd_hash, rol))
+
+            # Sofía (204862) es admin de PRUEBAS — no se evalúa a sí misma
+            if numero == "204862":
+                print(f"  ✓ {numero} {nombre_norm} ({rol}) — solo login")
+                continue
 
             # 2) Evaluado en la matriz (usuarios) — insertar solo si no existe
             cur.execute("""

@@ -20,8 +20,8 @@ if not JWT_SECRET or len(JWT_SECRET) < 32:
     raise RuntimeError("JWT_SECRET no configurado o muy corto (mínimo 32 chars). Revisa backend/.env")
 
 # Nombre y configuración de la cookie
-COOKIE_NAME      = "isp_cuestionario_session"
-COOKIE_PATH      = "/cuestionario"
+COOKIE_NAME      = "isp_conductas_session"
+COOKIE_PATH      = "/conductas-proyectos"
 COOKIE_SAMESITE  = "lax"      # Lax + same-origin en producción es suficiente para red interna
 COOKIE_SECURE    = False      # Producción es HTTP interno (gacenssv03). Cambiar a True si migran a HTTPS.
 COOKIE_HTTPONLY  = True       # JS no puede leerla — protege contra XSS

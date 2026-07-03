@@ -248,12 +248,15 @@ function EvaluarMatriz({ questions = [], usuarios = [], onReload, rol }) {
     setMensajeExito(false);
     setErrorValidacion("");
     try {
-      for (const [key, valor] of Object.entries(edicion)) {
-        if (valor == null) continue;
-        const [uId, qId] = key.split("-").map(Number);
-        await api.guardarRespuesta(uId, qId, valor);
-      }
-      await api.completarEvaluacion();
+  const respuestas = Object.entries(edicion)
+    .filter(([, valor]) => valor != null)
+    .map(([key, valor]) => {
+      const [usuario_id, pregunta_id] = key.split("-").map(Number);
+      return { usuario_id, pregunta_id, respuesta: valor };
+    });
+
+  await api.guardarRespuestasBatch(respuestas);
+  await api.completarEvaluacion();
 
       setEdicion({});
       setMensajeExito(true);

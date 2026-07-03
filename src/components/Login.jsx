@@ -49,8 +49,8 @@ export function Login({ onLogin }) {
             <p className="mt-4 text-sm font-semibold" style={{ color: "var(--isp-azul)" }}>
               Infraestructura y Servicios Portuarios
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight" style={{ color: "var(--isp-turquesa)" }}>
-              Evaluación de Conductas
+            <h1 className="mt-1 text-2xl font-bold tracking-tight" style={{ color: "var(--isp-turquesa)" }}>
+              Evaluación de Conductas Proyectos
             </h1>
           </div>
 
@@ -75,7 +75,7 @@ export function Login({ onLogin }) {
                 inputMode="numeric"
                 value={id}
                 onChange={(e) => setId(e.target.value)}
-                placeholder="Ej. 204726"
+                placeholder="Ej. 204862"
                 autoFocus
                 disabled={loading}
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:bg-white focus:ring-4 focus:ring-[var(--primary)]/10 disabled:opacity-50"

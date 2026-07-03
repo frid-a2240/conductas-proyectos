@@ -24,10 +24,10 @@ export default defineConfig(({ command }) => ({
   ],
 
   // ──────────────────────────────────────────────────────
-  // Prefijo bajo el cual vive la app en IIS (gacenssv03/cuestionario)
-  // En dev usamos '/' para URL limpia; en build usamos '/cuestionario/'
+  // Prefijo bajo el cual vive la app en IIS (gacenssv03/conductas-proyectos)
+  // En dev usamos '/' para URL limpia; en build usamos '/conductas-proyectos/'
   // ──────────────────────────────────────────────────────
-  base: command === 'build' ? '/cuestionario/' : '/',
+  base: command === 'build' ? '/conductas-proyectos/' : '/',
 
   resolve: {
     alias: {
@@ -45,20 +45,18 @@ export default defineConfig(({ command }) => ({
     outDir: 'backend/dist',
     emptyOutDir: true,
   },
-  // ━━━━ AÑADIR ESTO ━━━━
-  server: {
-    proxy: {
-      '/cuestionario/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
 
   // ──────────────────────────────────────────────────────
-  // Servidor de desarrollo accesible desde la red local
+  // Servidor de desarrollo — proxy + accesible desde red local
   // ──────────────────────────────────────────────────────
   server: {
     host: '0.0.0.0',
     port: 5173,
+    proxy: {
+      '/conductas-proyectos/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
-}}))
+}))
