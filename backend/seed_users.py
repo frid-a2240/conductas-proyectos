@@ -9,8 +9,9 @@ USERS = [
     ("204401", "Victor Rivera",       "supervisor"),
     ("204827", "Estefania Mendoza",   "supervisor"),
     ("202001", "Cristina Clemente",   "admin"),
-   
+    ("204726", "Jesus Samaniego",     "admin"),
 ]
+
 
 def main():
     pwd_hash = hash_password(DEFAULT_PASSWORD)
@@ -29,10 +30,7 @@ def main():
                         rol    = EXCLUDED.rol
             """, (numero, nombre_norm, pwd_hash, rol))
 
-            # Sofía (204862) es admin de PRUEBAS — no se evalúa a sí misma
-            if numero == "204862":
-                print(f"  ✓ {numero} {nombre_norm} ({rol}) — solo login")
-                continue
+           
 
             # 2) Evaluado en la matriz (usuarios) — insertar solo si no existe
             cur.execute("""

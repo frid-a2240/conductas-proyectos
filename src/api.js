@@ -11,8 +11,7 @@ async function req(path, options = {}) {
     ...options,
   });
 
-  // 401 en endpoints de autenticación → error normal (credenciales/pwd incorrectas)
-  // 401 en cualquier otro endpoint → sesión expirada
+
   if (r.status === 401) {
     const esEndpointAuth = AUTH_ENDPOINTS.some((ep) => path.startsWith(ep));
     if (!esEndpointAuth) {

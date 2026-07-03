@@ -5,9 +5,7 @@ import {
 } from "lucide-react";
 import { api } from "../api.js";
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Escala 0-5 (0 = sin referencia, NO cuenta para el promedio)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export const LIKERT_OPTIONS = [
   { value: 0, label: "Sin referencia para evaluar a esta persona" },
   { value: 1, label: "Nunca presenta esta conducta" },
