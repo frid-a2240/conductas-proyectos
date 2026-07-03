@@ -473,7 +473,7 @@ def reiniciar_evaluaciones(admin: dict = Depends(require_admin)):
 @api.get("/cristina/estatus")
 def cristina_estatus(admin: dict = Depends(require_cristina)):
     """Lista de evaluadores con su estado: Completada o Pendiente.
-    Excluye a Sofía (204862) porque es admin de pruebas, no evalúa realmente."""
+    Excluye a Sofía (204862, admin de pruebas) y a Jesús (204726, admin de vista)."""
     with get_cursor() as cur:
         cur.execute("""
             SELECT numero_empleado,
@@ -483,11 +483,10 @@ def cristina_estatus(admin: dict = Depends(require_cristina)):
                    evaluacion_completada_at
             FROM auth_users
             WHERE is_active = TRUE
-              AND numero_empleado <> '204862'
+              AND numero_empleado NOT IN ('204862', '204726')
             ORDER BY evaluacion_completada DESC, nombre
         """)
         return cur.fetchall()
-
 
 # ═══════════════════════ Exportar a Excel ═══════════════════════
 @api.get("/exportar/excel")
